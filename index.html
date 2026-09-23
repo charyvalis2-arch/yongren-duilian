@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>詠人．對聯練習</title>
+<style>
+:root{
+  --ink:#2b2420; --paper:#f6f0e4; --paper2:#efe6d3; --accent:#a3231f;
+  --accent2:#7a1a17; --gold:#b8933f; --muted:#8a7f6d; --card:#fffdf8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ece3d4; --paper:#1c1815; --paper2:#241f1a; --accent:#e05a52;
+    --accent2:#f2867e; --gold:#d8b968; --muted:#a99d88; --card:#26211c;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ece3d4; --paper:#1c1815; --paper2:#241f1a; --accent:#e05a52;
+  --accent2:#f2867e; --gold:#d8b968; --muted:#a99d88; --card:#26211c;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0; min-height:100%;
+  background:var(--paper); color:var(--ink);
+  font-family:"Noto Serif TC","PMingLiU","Songti TC",serif;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:720px; margin:0 auto; padding:20px 16px 40px;}
+header{text-align:center; margin-bottom:14px;}
+header h1{font-size:1.5rem; margin:0 0 4px; letter-spacing:.15em; color:var(--accent2);}
+header p{margin:0; color:var(--muted); font-size:.85rem;}
+.tabs{display:flex; gap:8px; margin:16px 0; overflow-x:auto; padding-bottom:2px;}
+.tab{
+  flex:none; padding:8px 14px; border-radius:999px; border:1px solid var(--gold);
+  background:transparent; color:var(--ink); font-size:.85rem; cursor:pointer; white-space:nowrap;
+  font-family:inherit;
+}
+.tab.active{background:var(--accent); color:#fff8ec; border-color:var(--accent);}
+.toolbar{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+.toolbar input[type=text]{
+  flex:1; min-width:140px; padding:9px 12px; border-radius:10px; border:1px solid var(--gold);
+  background:var(--card); color:var(--ink); font-size:.9rem; font-family:inherit;
+}
+.toolbar button.icon{
+  padding:9px 12px; border-radius:10px; border:1px solid var(--gold); background:var(--card);
+  color:var(--ink); font-size:.85rem; cursor:pointer;
+}
+.progress{text-align:center; color:var(--muted); font-size:.8rem; margin-bottom:6px;}
+.card{
+  background:var(--card); border:1px solid var(--gold); border-radius:16px;
+  padding:34px 22px; min-height:190px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; cursor:pointer;
+  box-shadow:0 4px 18px rgba(0,0,0,.08); position:relative;
+}
+.era{position:absolute; top:12px; left:16px; font-size:.72rem; color:var(--gold); letter-spacing:.1em;}
+.num{position:absolute; top:12px; right:16px; font-size:.72rem; color:var(--muted);}
+.couplet{
+  font-size:1.18rem; line-height:2; writing-mode:horizontal-tb;
+  white-space:pre-wrap; word-break:break-word;
+}
+.hint{margin-top:16px; font-size:.75rem; color:var(--muted);}
+.answer{
+  margin-top:18px; font-size:1.3rem; color:var(--accent); font-weight:700; letter-spacing:.08em;
+  display:none;
+}
+.answer.show{display:block;}
+.nav{display:flex; gap:10px; margin-top:16px;}
+.nav button{
+  flex:1; padding:12px; border-radius:12px; border:none; background:var(--accent2);
+  color:#fff8ec; font-size:.95rem; cursor:pointer; font-family:inherit;
+}
+.nav button:active{opacity:.85;}
+.nav button.secondary{background:var(--paper2); color:var(--ink); border:1px solid var(--gold);}
+.list{display:none; margin-top:10px;}
+.list.show{display:block;}
+.list table{width:100%; border-collapse:collapse; font-size:.85rem;}
+.list th,.list td{padding:8px 6px; border-bottom:1px solid var(--paper2); text-align:left; vertical-align:top;}
+.list th{color:var(--muted); font-weight:600;}
+.list-wrap{overflow-x:auto;}
+.empty{text-align:center; color:var(--muted); padding:30px 0;}
+.list td.spoiler{cursor:pointer; position:relative; color:var(--accent);}
+.list td.spoiler .ans-text{display:none;}
+.list td.spoiler .veil{color:var(--muted); font-size:.78rem;}
+.list td.spoiler.revealed .veil{display:none;}
+.list td.spoiler.revealed .ans-text{display:inline;}
+footer{text-align:center; color:var(--muted); font-size:.72rem; margin-top:28px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>詠 人．對 聯 練 習</h1>
+    <p>歷史人物聯 · 商用對聯 — 點卡片看答案</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-cat="hist">歷史人物聯（82）</button>
+    <button class="tab" data-cat="match">商用配合題（5）</button>
+    <button class="tab" data-cat="biz">商用問答題（96）</button>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="搜尋聯語或答案…">
+    <button class="icon" id="shuffleBtn">🔀 隨機</button>
+    <button class="icon" id="viewBtn">📋 列表</button>
+  </div>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="card" id="card">
+    <span class="era" id="era"></span>
+    <span class="num" id="num"></span>
+    <div class="couplet" id="couplet"></div>
+    <div class="hint" id="hint">點一下顯示答案</div>
+    <div class="answer" id="answer"></div>
+  </div>
+
+  <div class="nav">
+    <button class="secondary" id="prevBtn">← 上一題</button>
+    <button id="nextBtn">下一題 →</button>
+  </div>
+
+  <div class="list-wrap list" id="listView">
+    <table>
+      <thead><tr><th style="width:10%">#</th><th>聯語</th><th style="width:22%">答案</th></tr></thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+
+  <footer>共 183 題 · 學生練習版（答案預設隱藏）</footer>
+</div>
+
+<script>
+const DATA = {"hist":[[1,"三國","名士幾人兼將相；使君終古識英雄","諸葛亮"],[2,"戰國","尊王言，必稱堯舜/憂世心，同切孔顏","孟軻"],[3,"宋","三字蒙冤，千秋湛血/一生忠勇，萬古綱常","岳飛"],[4,"三國","兩表酬三顧/一對足千秋","諸葛亮"],[5,"漢","生死一知己/存亡兩婦人","韓信"],[6,"明","生來自有文信國；死而後已武鄉侯","史可法"],[7,"三國","興亡天定三分局；今古人思五丈原","諸葛亮"],[8,"春秋","衍一人忠恕之心傳，學貴省貫/開萬世治平之事業，道極明新","曾參"],[9,"三國","三顧頻繁天下計；兩朝開濟老臣心","諸葛亮"],[10,"春秋","允矣聖人之徒，聞善則行，聞過則喜/大哉夫子之勇，見危必拯，見義必為","季路"],[11,"宋","報國精忠，三字冤獄千古白/壯懷激烈，一篇詞著滿江紅","岳飛"],[12,"三國","廟垂二千年，問魏闕吳宮安在；人居三代下，比商伊周呂如何？","諸葛亮"],[13,"漢","一飯何曾思報答/雙眸早已識英雄","韓信"],[14,"春秋","祖述堯舜，憲章文武/德參天地，道冠古今","孔丘"],[15,"宋","青山有幸埋忠骨；白鐵無辜鑄佞臣","岳飛秦檜"],[16,"三國","自任以天下之重如此；是知其不可而為之歟","諸葛亮"],[17,"秦朝末年","天意欲與劉，到此英雄難用武；人心猶慕項，至今父老尚稱王","項羽"],[18,"宋","兵甲富於胸中，一代功名高宋室/憂樂關乎天下，千秋俎豆重蘇台","范仲淹"],[19,"三國","匹馬斬顏良，河北英雄齊喪膽；單刀會魯肅，江南名士盡低頭","關羽"],[20,"殷末","蒙難觀爻，石徑蒺蔾皆卦象/拘幽作操，雲田柞棫亦琴材","周文王"],[21,"殷末周初","幾根傲骨骼，撐持天地/兩個餓肚腹，包羅古今","伯夷叔齊"],[22,"三國","此吳地也，不為孫郎立廟；今帝號矣！何須曹氏封侯","關羽"],[23,"漢","壯士奮揮椎，報韓以落秦王膽/大王煩借箸，榮漢終函項羽頭","張良"],[24,"春秋","氣備四時，與天地日月鬼神合其德/教垂萬世，繼堯舜禹湯文武作之師","孔丘"],[25,"宋","久要不忘平生之言，古誼若龜鑑，忠肝如鐵石/敢問何謂浩然之氣，鎮地為河嶽，麗天為日星","文天祥"],[26,"宋","明天浩無邊，安排鐵板銅琶，我歌唱大江東去/春風睡正美，迢遞珠崖瓊島，更誰憐孤鶴南飛","蘇軾"],[27,"明","血染雨花台，為痛忠臣埋十族/聲淒雲樹勁，常留正氣炳千秋","方孝儒"],[28,"清","開萬古得未曾有之奇，洪荒留此山川，作遺民世界/極一生無可如何之遇，缺憾還諸天地，是創格完人","鄭成功"],[29,"三國","顧曲有閒情，不礙破曹真事業/飲醇原雅量，偏嫌生亮並英雄","周瑜"],[30,"唐","佛骨謫來，嶺海因而生色/鱷魚徙去，江湖自此澄清","韓愈"],[31,"戰國","千里而來，何必曰利，亦有仁義而已矣；百世之下，莫不興起，況於親炙之者乎？","l孟軻"],[32,"秦朝末年","此地疑仙，蓬萊、瀛洲、方丈；不知有漢，美人、名馬、英雄","項羽"],[33,"三國","生蒲洲，輔豫洲，保荊州，鼎峙西南，掌底江山歸統馭；主玄德，友翼德，仇夢德，威鎮華夏，眼中漢賊最分明","項羽"],[34,"唐","六宮粉黛無顏色；萬國衣冠拜冕旒","武則天"],[35,"唐","是耶非耶？不見玉顏空死處；念茲在茲，忽聞海上有仙山","楊玉環"],[36,"三國","赤面秉赤心，騎赤兔追風，馳驅時無忘赤帝；青燈觀青史，仗青龍偃月，隱微處不愧青天","關羽"],[37,"唐","薦汾陽再造唐家，並無尺土酬功，只落得采石青山，供當日神仙笑傲/喜妃子能讒學士，不是七言感怨，怎脫去名韁利鎖，讓先生詩酒逍","李白"],[38,"","由秀才封王，為天下讀書人別開生面；驅異族出境，語中國有志者再鼓雄風","鄭成功"],[39,"清","由秀才封王，柱撐半壁舊山河，為天下讀書人，頓生顏色；驅外夷出境，開闢千秋新世界，願中國有志者，再鼓雄風","鄭成功"],[40,"清","一死泯蕃漢鴻溝，流血凝成人類愛；千秋循聖賢軌轍，捐生稀有雁行齊","吳鳳"],[41,"三國","可託六尺之孤，可寄百里之命，君子人歟，君子人也！/隱居以求其志，行義以達其道，吾聞其語，吾見其人","諸葛亮"],[42,"明","佩武穆至言，不愛錢，不惜死；與文山比烈，曰取義，曰成仁","史可法"],[43,"清","一死感山胞，盡翻青史無前例；八方瞻廟貌，猶說朱衣有舊痕","吳鳳"],[44,"三國","成大事以小心，一生謹慎；仰流風於遺像，萬古清高","諸葛亮"],[45,"上古","一畫本天開，破上古洪荒，草昧無須更繩結；六書隨世換，供後人摩寫，英雄未免筆難投","倉頡"],[46,"明","尚張睢陽為友，奉左忠毅為師，大節炳千秋，列傳足光明史牒；夢文信國而生，慕武鄉侯而死，復仇經九世，神州終見漢衣冠","史可法"],[47,"三國","正統千秋，當有紫陽綱目；託孤數語，常留白帝城頭","劉備"],[48,"元","十八年古井無波，為從來烈婦貞媛，別開生面；千餘載寒窯向日，看此處曲江流水，想見冰心","王寶釧"],[49,"三國","三顧頻繁天下計；兩朝開濟老臣心","諸葛亮"],[50,"三國","青春南國喬出嫁；赤壁東風亮助攻（長）","周瑜"],[51,"戰國","何處招魂，香草還生三戶地/當年呵壁，湘流應識九歌心","屈原"],[52,"唐","世上瘡痍，詩中聖哲/民間疾苦，筆底波瀾","杜甫"],[53,"春秋","道若江河，隨地可成洙泗；聖如日月，普天皆有春秋","孔丘"],[54,"唐","一生好入名山，舉杯邀月；萬民長憶學士，歌詩銷憂","李白"],[55,"唐","忠愛託詩人，杅謫仙差許齊名，奚屑三唐科第/棲遲因地主，嚴節度頗稱知己，尚留數□□□","杜甫"],[56,"唐","百世之師，匹夫有志公可法/三書猶在，宰相無名鬼不靈","韓愈"],[57,"三國","收二川，排八陣，六出七擒，五丈原前，點四十九盞明登，一心只為酬三顧/定西蜀，伏南蠻，東和北拒，中軍帳內，卜金木五行爻卦，水裡偏能用火攻","諸葛亮"],[58,"明末清初","英雄應厄運而生，赤手擎天，存故國四十年正朔/開闢在神州以外，紅毛避地啟遐荒百萬眾題封","鄭成功"],[59,"唐","劇憐帝王風流，名花名酒；誰似太真佳寵，傾國傾城","楊玉環"],[60,"宋","觀瞻氣象耀民魂，喜今朝祠堂重開，老柏千尋抬望眼；收拾山河酬壯志，看此日神州奮起，新城萬里駕長車","岳飛"],[61,"明","殉社稷，只江北孤城，剩水殘山，尚留得風中勁草/葬衣冠，有淮南抔土，冰心鐵骨，好伴取嶺上梅花","史可法"],[62,"宋","天下太平，文官不愛錢，武官不怕死；乾坤正氣，下則為河嶽，上則為日星","文天祥"],[63,"明末清初","賜國姓，家破君亡，永矢孤忠，創基業在山窮水盡；復父書，詞嚴義正，千秋大節享俎豆於堯天舜日","鄭成功"],[64,"民國","作白話文，傳白話神，令普天下讀者如親沁咳；為青年師，向青年學，願吾輩中愨（音雀，誠實）士共守儀型","朱自清"],[65,"民國","哀哉秋風秋雨，東浙暗無光，女豪傑含冤七字；好是元年元日，西湖靈不昧，後英雄追悼孤魂","秋瑾"],[66,"宋","髮白存壯心，醉裡挑燈看劍；筆禿難報國，夢回吹角連營","辛棄疾"],[67,"唐","曾拿千金裘換酒；奚屑五斗米折腰","李白"],[68,"漢","為帝者師，佐漢功原高將相/棄人間事，報韓心已了英雄","張良"],[69,"唐","我輩到此惟飲酒；先生在上莫言詩","李白"],[70,"清","伏屍一人，流血五步；傳名萬古，遺愛千秋","吳鳳"],[71,"清","六月六日；秋風秋雨","秋瑾"],[72,"清","不信美人終薄命；由來俠骨出風塵","小鳳仙"],[73,"三國","梁父吟成高士志；出師表見老臣心","諸葛亮"],[74,"近代","替自由風氣吹先鋒號；為白話文學立里程碑","胡適"],[75,"近代","江戶矢丹忱，多君首贊同盟會；軒亭留碧血，恨我遲招俠女魂","秋瑾"],[76,"清","在劉漢為呂后，在李唐為則天，淫狠性成，算是千古三人，三人千古；隨先帝奔熱河，隨後主奔秦境，艱難歷盡，可謂一生九死，九死一生","慈禧太后"],[77,"殷末周初","君德難回，當此眾叛親離，若但如微子去，箕子奴，無以激億萬人忠貞之氣/臣心不死，即魂飛血濺，猶將以周日興，殷日喪，上訴諸六七王陟降之靈","比干"],[78,"三國","巾扇任逍遙，試看抱膝長吟，高臥尚留名士跡/井廬空眷念，可憐鞠躬盡瘁，歸耕未遂老臣心","諸葛亮"],[79,"唐","侍金鑾，謫夜郎，他心中有何得失窮通？但隨遇而安，說什麼仙，說什麼狂，說什麼文章身價，上下數千年，只有楚屈平、漢曼倩、晉陶淵明，能彷彿一人胸次/跪危機，俯長江，這眼前更覺天空海闊，試憑欄遠望，不可無詩，不可無酒，不可無奇談快論，留連四五日，豈惟牛渚月、白紵雲、青山煙雨，都收來百尺樓頭","李白"],[80,"宋","呂道人太無聊，八百里洞庭，飛過去，飛過來，一個神仙誰在眼？范秀才亦多事，數十年光景，甚麼先，甚麼後，萬家憂樂總關心","范仲淹祠"],[81,"唐","我去太匆匆，騎鶴仙人還送客；玆游良眷眷，落梅時節且登樓","黃鶴樓"],[82,"唐","我輩復登臨，目極湖山千里而外；奇文共欣賞，人在水天一色之中","滕王閣"]],"match":[["但願人皆健；何妨我獨貧。","醫師"],["大地山川生筆底；九州人物給毫端。","畫家"],["笑我如觀雲裡月；憑君能辨霧中花。","眼鏡行"],["雖是毫末技藝；卻是頂上功夫。","理髮師"],["熱血丹心育桃李；櫛風沐雨做園丁。","教師"]],"biz":[[1,"雙手劈開生死路；一刀割斷是非根","閹豬業"],[2,"共對一樽酒；相看萬里人","酒家"],[3,"穀乃國之寶；民以食為天","米店"],[4,"調羹幸有易牙手；負鼎無慚伊尹才","廚師"],[5,"奉公權作知更雀；戒旦無煩報曉雞","更夫"],[6,"但願人皆健；何妨我獨貧","醫師"],[7,"一醉千愁解；三杯萬事和","酒家"],[8,"大地山川生筆底；九州人物給毫端","畫家"],[9,"南國雪絲輝黼黻；中天雲錦煥文章","綢布莊"],[10,"秦鏡如懸機關參透；廬山在此面目留真","照相館"],[11,"玉簡金泥山通宛委；瓊編秘笈地接瑯嬛","書店"],[12,"步月凌波去；登堂入室來","鞋襪店"],[13,"遠近勞雙足；高低穩一肩","扛夫轎夫"],[14,"不是胸中存灼見；如何眼底辨秋毫","眼鏡"],[15,"黑雲翻墨遮天際；白雨跳珠入水時","雨傘"],[16,"入地升天，揮灑熱汗千萬滴；櫛風沐雨，相幫老杜心願成","建築業"],[17,"圯橋曾進高人履；瀛海爭誇學士靴","鞋店"],[18,"只用耳提何須面命；吾聞其語未見斯人","電話"],[19,"三百六旬歸掌握；二十八宿羅心胸","鐘錶店"],[20,"鐵漢三杯腳軟；金剛一盞搖頭","酒店"],[21,"還我廬山真面目；愛她秋水舊風采","照相館"],[22,"加諸我也，眸子瞭焉。利其器矣，望之儼然","眼鏡行"],[23,"笑我如觀雲裡月；憑君能辨霧中花","眼鏡行"],[24,"青黃赤白黑，色色皆亮麗；紫綠朱藍橙，物物得更新","油漆店"],[25,"鐵筆誰操功成刻鵠；金章可琢藝進雕蟲","刻印店"],[26,"玉嵌金鑲彌縫有術，月圓花好殘缺無虞","牙醫"],[27,"青出於藍原有本；白翻乎黑豈無因","洗染店"],[28,"雖是毫末「技藝」；卻是頂上功夫","美髮業"],[29,"劉伶借問誰家好？李白還言此處佳","酒家"],[30,"田野飛來千樹綠，一身常帶百花香","花店"],[31,"刻刻催人資警醒，聲聲（或作「時時」）呼人惜光陰","鬧鐘"],[32,"炎夏消暑不多錢；悶秋解渴好成眠","冷飲店"],[33,"醉裡乾坤大；壺中日月長","酒家"],[34,"熱血丹心育桃李；櫛風沐雨做園丁","教師"],[35,"一藥一性，豈能指鹿為馬；百病百方，焉敢以牛易羊","藥局醫院"],[36,"四季發財，全憑吾手；一年生計，專靠人頭","理髮業"],[37,"醍醐難灌頂；蔭雨賴當頭","雨傘"],[38,"聞弦歌之聲，賢者亦樂此；見羽旄之美，鄉人皆愛之","舞台戲院"],[39,"看我非我，我看我，我亦非我；裝誰像誰，誰裝誰，誰就像誰","舞台戲院"],[40,"非邀譽，非納交，此為民父母；毋伐善，毋施勞，以保我子孫","育幼院"],[41,"小大由之，總宜知足；修短合度，方稱己心","鞋店"],[42,"臺上風情，無非嘻笑怒罵；眼前景象，可觀善惡是非","舞台戲院"],[43,"蘊白含黃、渾圓一體；揚清激濁，分判兩儀","雞蛋"],[44,"要看早些來，大關節全憑起首；且聽完了去，好結果儘在後頭","舞台戲院"],[45,"迎八面春風入院；接四方賓客歸家","旅館"],[46,"莫到用時方恨少；總須平日讀來多","書店"],[47,"新花雪色晴能舞；古調秦聲靜可彈","彈棉被店"],[48,"以質得財，親疏無異；因貧生息，爾我相安","當鋪"],[49,"膠鬲芳蹤原隱市；管生遺澤在經邦","鹽業"],[50,"豈是因財取利；無非周急為心","當鋪"],[51,"入座三杯醉者也；出門一拱歪之乎","酒家"],[52,"足國宜人，功留淮海；煎霜煮雪，品重調和","鹽業"],[53,"五經不讀，霎時題名金榜；六禮未成，頃刻洞房花燭","舞台戲院"],[54,"拳打滿朝文武；刀掃各路英雄","理髮業"],[55,"惟本色英雄，方能到此；是可憐兒女，何必苛求","妓院"],[56,"好容易吃得一頓飯；莫等閒白了少年頭","孤兒院"],[57,"夢且得官為瑞物；呼之為壽亦佳名","棺材店"],[58,"勸君更盡一杯酒；與爾同銷萬古愁","酒家"],[59,"無慮風雲多不測；何愁水火太無情","保險業"],[60,"賈島醉來非假倒；劉伶飲盡不留零","酒家"],[61,"欲把西湖比西子；從來佳茗似佳人","茶館"],[62,"設為學校庠序以教；多識鳥獸草木之名","博物館"],[63,"願處處都成病世界；笑年年做了苦生涯","藥局醫院"],[64,"遠處因風颭；宵來替月明","油燈火把"],[65,"日月光天德；山河壯帝居","皇宮"],[66,"莫道斗筲何足算；須知簞食亦堪稱","竹器店"],[67,"懸將小日月；照徹大乾坤","眼鏡店"],[68,"往來盡是甘甜客；談笑應無拂逆人","糖果屋"],[69,"力能入夜三光助；功在開門七件中","食用油"],[70,"五色艷爭江令夢；一枝春暖管城花","筆店"],[71,"笑啼怒罵皆學問；悲歡離合盡人情","舞台戲院"],[72,"紅臉忠，白臉奸，黑臉驍勇；老旦醜，正旦雅，花旦風流","舞台戲院"],[73,"我豈肯得新忘舊；君何妨以有易無","二手貨"],[74,"曰古曰今，無非借口警世；拼生拼死，何嘗拿刀殺人","舞台戲院"],[75,"磨礪以須，問天下頭顱幾許？及鋒而試，看老夫手段如何？","美髮業"],[76,"憑我雙拳，打盡天下英雄，誰敢還手？就此一刀，剃遍世間豪傑，無不低頭","美髮業"],[77,"或為君子小人，或為才子佳人，登場便見；有時歡天喜地，有時驚天動地，轉眼皆空","舞台戲院"],[78,"想平生鬥武的雄心，武德哪甘儕眾鳥；等世界天明時開口，一鳴何怕不驚人","雄雞"],[79,"你打起臉來，全憑著幾件衣裳，今日頓忘前日像；我睜著眼看，任做盡百般情態，上場總有下場時","舞台戲院"],[80,"只有幾個錢，你也求，他也求，給誰是好？不做半點事，朝來拜，夕來拜，叫我為難","財神廟"],[81,"神是人，鬼是人，人也是人，一二人千變萬化；車行步，馬行步，步亦行步，三五步四海九洲","舞台戲院"],[82,"是是非非，天天編編寫寫；好好壞壞，事事細細詳詳","報社"],[83,"無絲竹亂耳，四壁藏古今學術；樂琴書消憂，一經秉天地精華","圖書館"],[84,"推己及人豈是因財取利；出資換物無非周急為心","當鋪"],[85,"到此間懊悔已遲，何苦作歹為非，竟致捉將官裏去；出獄後光陰尚早，務要循規蹈矩，莫教再入我門來","監獄"],[86,"子不子，亦各言其子，委而棄之，是可忍也，孰不可忍也，先王斯有不忍人之政；幼吾幼，以及人之幼，比而同之，有以異乎？曰無以異也，大人不失其赤子之心","孤兒院"],[87,"是鰥寡孤獨外別一種無告窮民，只當我兒女看來，欲借慈航渡孽海；于罟獲陷阱中開這條放生大路，要把他繁華喚醒，不留地獄在人間","濟良所"],[88,"莫尋仇，莫負氣，莫聽教唆，到此地費心，費力，費錢，就勝人，終累己；要酌理，要揆情，要度時勢，做這官不清，不勤，不慎，易造孽，難欺天","法院"],[89,"載舟能覆舟，須于遇順風時扭定篷腳；人溺猶己溺，漫云立高山上漠不關心","救生員"],[90,"饒他是絕世英雄，來斯定當彎腰屈膝；任妳係貞節女子，至此也當解帶寬裙","廁所"],[91,"不大地方，可國可家可天下；平常人物，為將為相為名臣","舞台戲院"],[92,"醍醐難灌頂；蔭雨賴當頭。","雨傘"],[93,"醉裡乾坤大；壺中日月長。","pub"],[94,"穀乃國之寶；民以食為天","米店"],[95,"調羹幸有易牙手；負鼎無慚伊尹才","宰相"],[96,"但願人皆健；何妨我獨貧","醫師"]]};
+
+function norm(cat){
+  // returns array of {num, era, text, ans}
+  if(cat==='hist') return DATA.hist.map(x=>({num:x[0], era:x[1], text:x[2], ans:x[3]}));
+  if(cat==='match') return DATA.match.map((x,i)=>({num:i+1, era:'配合題', text:x[0], ans:x[1]}));
+  return DATA.biz.map(x=>({num:x[0], era:'', text:x[1], ans:x[2]}));
+}
+
+let state = { cat:'hist', items:[], order:[], idx:0, showAns:false, listMode:false, query:'' };
+
+function applyFilter(){
+  const base = norm(state.cat);
+  const q = state.query.trim();
+  state.items = q ? base.filter(it => it.text.includes(q) || it.ans.includes(q)) : base;
+  state.order = state.items.map((_,i)=>i);
+  state.idx = 0;
+  state.showAns = false;
+}
+
+function shuffleOrder(){
+  for(let i=state.order.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [state.order[i],state.order[j]]=[state.order[j],state.order[i]];
+  }
+  state.idx = 0;
+  state.showAns = false;
+  render();
+}
+
+function render(){
+  const total = state.items.length;
+  document.getElementById('progress').textContent = total ? `第 ${state.idx+1} / ${total} 題` : '';
+  const cardEl = document.getElementById('card');
+  if(!total){
+    document.getElementById('era').textContent='';
+    document.getElementById('num').textContent='';
+    document.getElementById('couplet').textContent='';
+    document.getElementById('hint').textContent='';
+    document.getElementById('answer').classList.remove('show');
+    cardEl.querySelector('#couplet').innerHTML = '<span style="color:var(--muted)">沒有符合的題目</span>';
+  } else {
+    const it = state.items[state.order[state.idx]];
+    document.getElementById('era').textContent = it.era || '';
+    document.getElementById('num').textContent = 'No.'+it.num;
+    document.getElementById('couplet').textContent = it.text.replace(/\//g,'　／　');
+    document.getElementById('hint').textContent = state.showAns ? '' : '點一下顯示答案';
+    const ansEl = document.getElementById('answer');
+    ansEl.textContent = it.ans;
+    ansEl.classList.toggle('show', state.showAns);
+  }
+  renderList();
+}
+
+function renderList(){
+  const body = document.getElementById('listBody');
+  body.innerHTML = state.items.map(it=>
+    `<tr><td>${it.num}</td><td>${it.text.replace(/\//g,'／')}</td><td class="spoiler" onclick="this.classList.toggle('revealed')"><span class="veil">點一下顯示</span><span class="ans-text">${it.ans}</span></td></tr>`
+  ).join('');
+}
+
+document.getElementById('card').addEventListener('click', ()=>{
+  if(!state.items.length) return;
+  state.showAns = !state.showAns;
+  render();
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(!state.items.length) return;
+  state.idx = (state.idx+1) % state.items.length;
+  state.showAns = false;
+  render();
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  if(!state.items.length) return;
+  state.idx = (state.idx-1+state.items.length) % state.items.length;
+  state.showAns = false;
+  render();
+});
+document.getElementById('shuffleBtn').addEventListener('click', shuffleOrder);
+document.getElementById('viewBtn').addEventListener('click', ()=>{
+  state.listMode = !state.listMode;
+  document.getElementById('listView').classList.toggle('show', state.listMode);
+  document.getElementById('card').style.display = state.listMode ? 'none' : 'flex';
+  document.getElementById('progress').style.display = state.listMode ? 'none' : 'block';
+  document.querySelector('.nav').style.display = state.listMode ? 'none' : 'flex';
+  document.getElementById('viewBtn').textContent = state.listMode ? '🗂 卡片' : '📋 列表';
+});
+document.getElementById('search').addEventListener('input', (e)=>{
+  state.query = e.target.value;
+  applyFilter();
+  render();
+});
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.cat = btn.dataset.cat;
+    document.getElementById('search').value='';
+    state.query='';
+    applyFilter();
+    render();
+  });
+});
+
+applyFilter();
+render();
+</script>
+</body>
+</html>
