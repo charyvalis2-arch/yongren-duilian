@@ -57,6 +57,13 @@ header p{margin:0; color:var(--muted); font-size:.85rem;}
 }
 .era{position:absolute; top:12px; left:16px; font-size:.72rem; color:var(--gold); letter-spacing:.1em;}
 .num{position:absolute; top:12px; right:16px; font-size:.72rem; color:var(--muted);}
+.speak-btn{
+  position:absolute; bottom:12px; right:14px; width:38px; height:38px; border-radius:50%;
+  border:1px solid var(--gold); background:var(--paper2); font-size:1.05rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; color:var(--ink);
+}
+.speak-btn:active{transform:scale(.94);}
+.speak-btn.playing{background:var(--accent); color:#fff8ec; border-color:var(--accent);}
 .couplet{
   font-size:1.18rem; line-height:2; writing-mode:horizontal-tb;
   white-space:pre-wrap; word-break:break-word;
@@ -113,6 +120,7 @@ footer{text-align:center; color:var(--muted); font-size:.72rem; margin-top:28px;
   <div class="card" id="card">
     <span class="era" id="era"></span>
     <span class="num" id="num"></span>
+    <button class="speak-btn" id="speakBtn" onclick="event.stopPropagation(); speakCurrent();" aria-label="朗讀">🔊</button>
     <div class="couplet" id="couplet"></div>
     <div class="hint" id="hint">點一下顯示答案</div>
     <div class="answer" id="answer"></div>
@@ -164,6 +172,24 @@ function shuffleOrder(){
   render();
 }
 
+function speakCurrent(){
+  if(!('speechSynthesis' in window)){ alert('此瀏覽器不支援語音朗讀'); return; }
+  const total = state.items.length;
+  if(!total) return;
+  const it = state.items[state.order[state.idx]];
+  window.speechSynthesis.cancel();
+  let text = it.text.replace(/\//g, '，');
+  if(state.showAns) text += '。答案：' + it.ans;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-TW';
+  u.rate = 0.85;
+  const btn = document.getElementById('speakBtn');
+  u.onstart = ()=> btn && btn.classList.add('playing');
+  u.onend = ()=> btn && btn.classList.remove('playing');
+  u.onerror = ()=> btn && btn.classList.remove('playing');
+  window.speechSynthesis.speak(u);
+}
+
 function render(){
   const total = state.items.length;
   document.getElementById('progress').textContent = total ? `第 ${state.idx+1} / ${total} 題` : '';
@@ -202,12 +228,14 @@ document.getElementById('card').addEventListener('click', ()=>{
 });
 document.getElementById('nextBtn').addEventListener('click', ()=>{
   if(!state.items.length) return;
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
   state.idx = (state.idx+1) % state.items.length;
   state.showAns = false;
   render();
 });
 document.getElementById('prevBtn').addEventListener('click', ()=>{
   if(!state.items.length) return;
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
   state.idx = (state.idx-1+state.items.length) % state.items.length;
   state.showAns = false;
   render();
@@ -228,6 +256,7 @@ document.getElementById('search').addEventListener('input', (e)=>{
 });
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     state.cat = btn.dataset.cat;
@@ -237,6 +266,11 @@ document.querySelectorAll('.tab').forEach(btn=>{
     render();
   });
 });
+
+if(!('speechSynthesis' in window)){
+  const sb = document.getElementById('speakBtn');
+  if(sb) sb.style.display = 'none';
+}
 
 applyFilter();
 render();
