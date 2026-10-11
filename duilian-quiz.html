@@ -123,7 +123,7 @@ function ask(){const q=S.qs[S.i];if(!q)return end();
 function end(){const k=S.ok>=9?3:S.ok>=7?2:S.ok>=5?1:0;if(S.l){const st=LS.get(PFX+"_st",{});st[S.l]=Math.max(st[S.l]||0,k);LS.set(PFX+"_st",st)}
  app.innerHTML=`<div class="card" style="text-align:center"><h1>${stars(k)}</h1><div class="stem">答對 ${S.ok} / ${S.qs.length}</div><p>${k==3?"${WIN}":k?"不錯喔，再玩一次衝三星！":"沒關係，答錯的已收進錯題本，複習後再挑戰！"}</p><button class="btn" onclick="home()">回首頁</button> <button class="btn g" id="ag">再玩一次</button></div>`;
  $("#ag").onclick=()=>S.l?start(gen(S.l),S.l):home()}
-function proj(l){document.body.classList.add("big");let qs=gen(l),i=0,rev=0,tm=[0,0,0,0];
+function proj(l){document.body.classList.add("big");let qs=gen(l),i=0,rev=0,tm=[0,0,0,0,0];
  const draw=()=>{const q=qs[i];app.innerHTML=`<div class="top"><b>${LV[l].e} ${LV[l].n}：${LV[l].t}</b><span>第 ${i+1} / ${qs.length} 題　［空白鍵／點畫面下方按鈕］</span><button class="btn g" id="x">離開</button></div><div class="card"><div class="stem">${q.s}</div>${q.o.map((t,j)=>`<div class="o ${rev&&t===q.a?"ok":""}"><span>${"ABCD"[j]}</span><i style="font-style:normal">${hl(t)}</i></div>`).join("")}<div class="ex ${rev?"on":""}">${q.e}</div></div><button class="btn" id="go">${rev?"下一題 ➜":"揭曉答案"}</button><div class="tm">${tm.map((v,j)=>`<div>第${j+1}組<b>${v}</b><button class="btn g" data-t="${j}">＋1</button><button class="btn g" data-m="${j}">－1</button></div>`).join("")}</div>`;
   $("#x").onclick=()=>{document.onkeydown=null;home()};$("#go").onclick=nx;
   app.querySelectorAll("[data-t]").forEach(b=>b.onclick=e=>{e.stopPropagation();tm[+b.dataset.t]++;draw()});app.querySelectorAll("[data-m]").forEach(b=>b.onclick=e=>{e.stopPropagation();tm[+b.dataset.m]--;draw()})};
